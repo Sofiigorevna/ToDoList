@@ -8,7 +8,7 @@
 import UIKit
 
 enum DetailTaskModule {
-    static func build() -> UIViewController {
+    static func build(with id: Int) -> UIViewController {
         let view = DetailTaskViewController()
         let presenter = DetailTaskPresenter()
         let router = DetailTaskRouter()

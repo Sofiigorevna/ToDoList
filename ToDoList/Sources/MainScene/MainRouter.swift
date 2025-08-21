@@ -17,9 +17,9 @@ final class MainRouter {
 // MARK: - IMainRouter
 extension MainRouter: IMainRouter {
     func openDetailTask(with id: Int) {
-        //        let vc = ProductPageModule.build(withSlug: slug, userInfo: userInfo)
-        //        if let navVC = transitionHandler?.navigationController {
-        //            navVC.pushViewController(vc, animated: true)
-        //        }
+        let vc = DetailTaskModule.build(with: id)
+        if let navVC = transitionHandler?.navigationController {
+            navVC.pushViewController(vc, animated: true)
+        }
     }
 }

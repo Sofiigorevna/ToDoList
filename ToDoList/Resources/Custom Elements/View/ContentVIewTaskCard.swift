@@ -91,7 +91,7 @@ private extension ContentVIewTaskCard {
         checkmarkImageView.contentMode = .scaleAspectFit
         checkmarkImageView.tintColor = Colors.gray.color
         
-        titleLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        titleLabel.font = .systemFont(ofSize: 17, weight: .medium)
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 0
         
@@ -113,14 +113,14 @@ private extension ContentVIewTaskCard {
         }
         
         NSLayoutConstraint.activate([
-            checkmarkImageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Sizes.Spacing.S16.left),
+            checkmarkImageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Sizes.Spacing.S8.left),
             checkmarkImageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            checkmarkImageView.widthAnchor.constraint(equalToConstant: Sizes.Height.h024),
-            checkmarkImageView.heightAnchor.constraint(equalToConstant: Sizes.Width.w024),
+            checkmarkImageView.widthAnchor.constraint(equalToConstant: Sizes.Height.h028),
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: Sizes.Width.w028),
             
             stackView.leftAnchor.constraint(equalTo: checkmarkImageView.rightAnchor, constant: Sizes.Spacing.S12.left),
             stackView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: Sizes.Spacing.S16.right),
-            stackView.topAnchor.constraint(equalTo: self.topAnchor, constant: Sizes.Spacing.S12.top),
+            stackView.topAnchor.constraint(equalTo: checkmarkImageView.topAnchor, constant: Sizes.Spacing.S2.top),
             stackView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: Sizes.Spacing.S12.bottom)
         ])
     }

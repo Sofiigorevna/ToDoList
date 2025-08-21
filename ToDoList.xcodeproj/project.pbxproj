@@ -39,7 +39,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/Info.plist,
-				Sources/DetailTaskScene/DetailTaskModule.swift,
 			);
 			target = D2B006C02E56EFDB0037E971 /* ToDoList */;
 		};
