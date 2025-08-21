@@ -8,7 +8,7 @@
 import Foundation
 /// - Фиксированные фразы которые не подлежат изменению
 enum FixedPhrases {
-    static let edit = "Редактировать"
-    static let toShare = "Поделиться"
-    static let delete = "Удалить"
+    static let edit: String = "Редактировать"
+    static let toShare: String = "Поделиться"
+    static let delete: String = "Удалить"
 }

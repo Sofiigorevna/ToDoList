@@ -57,8 +57,13 @@ extension MainInteractor: IMainInteractor {
 private extension MainInteractor {
     func createCardSection() -> MainModel.Response.MainSection {
         let items: [MainModel.Response.Item] = [
-           
+            .taskCard(task: UserTask,
+                      goToDetailTask: {},
+                      deleteTask: {},
+                      toShareTask: {}
+                     )
         ]
+        
         return MainModel.Response.MainSection(section: .title(title: MainTitleSection.taskCard.rawValue), items: items)
     }
     

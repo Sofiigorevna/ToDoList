@@ -35,6 +35,18 @@ private extension MainPresenter {
     }
     
     func mapData(item: MainModel.Response.Item) -> ICellViewModel {
-       
+        switch item {
+            case .taskCard(
+                let task,
+                let goToDetailTask,
+                let deleteTask,
+                let toShareTask):
+                
+                return TaskCardViewModel(
+                    task: task,
+                    goToDetailTask: goToDetailTask,
+                    deleteTask: deleteTask,
+                    toShareTask: toShareTask)
+        }
     }
 }

@@ -17,7 +17,12 @@ enum MainModel {
         }
         
         enum Item {
-           
+            case taskCard(
+                task: UserTask,
+                goToDetailTask: (() -> Void),
+                deleteTask: (() -> Void),
+                toShareTask: (() -> Void)
+            )
         }
     }
 }

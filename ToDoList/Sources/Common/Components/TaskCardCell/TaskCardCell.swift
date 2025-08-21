@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import UniformTypeIdentifiers
 
 final class TaskCardCell: UITableViewCell {
     private let customContentView = ContentVIewTaskCard()
@@ -71,29 +72,23 @@ extension TaskCardCell: UIContextMenuInteractionDelegate {
         configurationForMenuAtLocation location: CGPoint
     ) -> UIContextMenuConfiguration? {
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
-            // Редактировать - иконка карандаша
-            let edit = UIAction(
-                title: self.editTitleButton,
-                image: UIImage(systemName: "pencil")
-            ) { _ in
-                UIPasteboard.general.string = self.cellModel?.goToDetailTask
+            // Редактировать 
+            let edit = UIAction(title: self.editTitleButton, image: UIImage(systemName: "pencil")) { _ in
+                self.cellModel?.goToDetailTask()
             }
             
-            // Поделиться - иконка分享
-            let toShare = UIAction(
-                title: self.toShareTitleButton,
-                image: UIImage(systemName: "square.and.arrow.up")
-            ) { _ in
-                UIPasteboard.general.string = self.cellModel?.toShareTask
+            // Поделиться
+            let toShare = UIAction(title: self.toShareTitleButton, image: UIImage(systemName: "square.and.arrow.up")) { _ in
+                self.cellModel?.toShareTask()
             }
             
-            // Удалить - иконка корзины красного цвета
+            // Удалить
             let delete = UIAction(
                 title: self.deleteTitleButton,
                 image: UIImage(systemName: "trash"),
                 attributes: .destructive
             ) { _ in
-                UIPasteboard.general.string = self.cellModel?.deleteTask
+                self.cellModel?.deleteTask()
             }
             
             return UIMenu(title: "", children: [edit, toShare, delete])
