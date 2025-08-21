@@ -79,7 +79,7 @@ private extension ModuleTableViewController {
     }
     
     func setupTableView() {
-        tableView.backgroundColor = VimColor.Basic.snowWhite.color
+        tableView.backgroundColor = Colors.background.color
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -99,7 +99,5 @@ extension ModuleTableViewController: UITableViewDelegate {
         return UITableView.automaticDimension
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        viewModel.didTapItem(at: indexPath)
-    }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {  }
 }

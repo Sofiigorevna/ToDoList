@@ -140,3 +140,4 @@ class TaskTableViewCell: UITableViewCell {
         checkmarkImageView.image = nil
     }
 }
+
