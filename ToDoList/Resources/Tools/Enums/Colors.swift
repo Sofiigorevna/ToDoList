@@ -13,6 +13,7 @@ enum Colors {
     case label
     case secondaryLabel
     case accent
+    case gray
     
     var color: UIColor {
         switch self {
@@ -26,6 +27,8 @@ enum Colors {
                 return .secondaryLabel
             case .accent:
                 return .systemYellow
+                case .gray:
+                return .systemGray
         }
     }
 }

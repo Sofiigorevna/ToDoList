@@ -105,7 +105,7 @@ private extension MainViewController {
         let flexibleRight = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         
         let addItem = UIBarButtonItem(
-            image: UIImage(systemName: "square.and.pencil")?
+            image: Images.squarePencil.image?
                 .withConfiguration(
                     UIImage.SymbolConfiguration(
                         pointSize: 24,

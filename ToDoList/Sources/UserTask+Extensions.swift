@@ -38,7 +38,7 @@ extension UserTask {
     }
     
     var statusIcon: String {
-        return isCompleted ? "checkmark.circle.fill" : "circle"
+        return isCompleted ? Images.checkmark.rawValue : Images.circle.rawValue
     }
     
     // MARK: - Validation
