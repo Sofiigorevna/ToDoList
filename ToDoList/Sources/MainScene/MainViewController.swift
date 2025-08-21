@@ -41,8 +41,14 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         showLoader()
-        interactor?.loadData()
-        //  tasks =
+        interactor?.loadData { [weak self] tasksCont in
+            guard let self = self else { return }
+            self.taskCount = tasksCont
+        }
+    }
+    
+    @objc private func addNote() {
+        print("Новая заметка")
     }
 }
 // MARK: - IMainView
@@ -121,10 +127,6 @@ private extension MainViewController {
         addItem.tintColor = Colors.accent.color
         
         toolbar.items = [flexibleLeft, countItem, flexibleRight, addItem]
-    }
-    
-    @objc private func addNote() {
-        print("Новая заметка")
     }
     
     func updateToolbarTaskCount(_ count: Int) {

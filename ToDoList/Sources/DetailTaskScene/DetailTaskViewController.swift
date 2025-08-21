@@ -12,7 +12,7 @@ protocol IDetailTaskView: IModuleTableView {
 }
 
 final class DetailTaskViewController: ModuleTableViewController, IActivityIndicatorView {
-    var interactor: IMainInteractor?
+    var interactor: IDetailTaskInteractor?
     internal var activityIndicatorView: UIActivityIndicatorView = UIActivityIndicatorView(style: .large)
     
     override func viewWillAppear(_ animated: Bool) {

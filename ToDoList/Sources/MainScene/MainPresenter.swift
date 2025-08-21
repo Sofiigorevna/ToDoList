@@ -40,13 +40,16 @@ private extension MainPresenter {
                 let task,
                 let goToDetailTask,
                 let deleteTask,
-                let toShareTask):
+                let toShareTask,
+                let toggleIsDone
+            ):
                 
                 return TaskCardViewModel(
                     task: task,
                     goToDetailTask: goToDetailTask,
                     deleteTask: deleteTask,
-                    toShareTask: toShareTask)
+                    toShareTask: toShareTask,
+                    toggleIsDone: toggleIsDone)
         }
     }
 }

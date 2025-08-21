@@ -14,7 +14,7 @@ enum MainTitleSection: String {
 /// Протокол для работы с tasks
 protocol IMainInteractor {
     /// Загрузить данные
-    func loadData()
+    func loadData(completion: @escaping(_ tasksCont: Int) -> ())
     /// переход на страницу
     ///
     /// - Parameter id: id task
@@ -26,7 +26,10 @@ final class MainInteractor {
     
     private let router: IMainRouter
     private let presenter: IMainPresenter
-  
+    private let dataSource = NetworkManager.shared
+    private let taskManager: TaskManagerType = TaskManager()
+    
+    private var tasks: [UserTask] = []
     private var sections = [MainModel.Response.MainSection]()
     
     init(
@@ -40,58 +43,66 @@ final class MainInteractor {
 // MARK: - IMainInteractor
 extension MainInteractor: IMainInteractor {
     func handlingInteractionWithSearchField() {
-        
+        print("tapped SearchField")
     }
     
-    func loadData() {
+    func loadData(completion: @escaping(_ tasksCont: Int) -> ()) {
         sections.removeAll()
-        sections.append(createCardSection())
-        presenter.publish(data: MainModel.Response(data: self.sections))
+        taskManager.getAllTasks { [weak self] tasks in
+            guard let self = self else { return }
+            self.tasks = tasks
+            for task in tasks {
+                self.sections.append(self.createCardSection(task: task))
+            }
+            presenter.publish(data: MainModel.Response(data: self.sections))
+            completion(tasks.count)
+        }
     }
     
     func openDetailTask(with id: Int) {
-    //    router.openArtPage(slug)
+        router.openDetailTask(with: id)
     }
 }
 // MARK: - Creating Sections
 private extension MainInteractor {
-    func createCardSection() -> MainModel.Response.MainSection {
+    func createCardSection(task: UserTask) -> MainModel.Response.MainSection {
         let items: [MainModel.Response.Item] = [
-            .taskCard(task: UserTask,
+            .taskCard(task: task,
                       goToDetailTask: {},
-                      deleteTask: {},
-                      toShareTask: {}
+                      deleteTask: deleteTask,
+                      toShareTask: toShareTask,
+                      toggleIsDone: toggleCheckmark
                      )
         ]
         
         return MainModel.Response.MainSection(section: .title(title: MainTitleSection.taskCard.rawValue), items: items)
     }
-    
-    func createSections(with arts: [Any]) {
-        if arts.isEmpty {
-            
-//            let emptyImageSection = managerSections.createEmptyImageSection()
-//
-//            let twoTitlesSection = managerSections.createTwoTitlesSection()
-//
-//            let buttonSection = managerSections.createButtonSection(action: pressToButton)
-//
-//            sections = [emptyImageSection, twoTitlesSection, buttonSection]
-        } else {
-                       
-//            // Добавляет art в userDefaults (которые пришли с сервера, допустим добавленные с сайта)
-//            arts.forEach { [weak self] art in
-//                guard let self else { return }
-//                self.userDefaults.saveProductIsFavorite(product.slug ?? "")
-//            }
-//
-//            let artsSection = managerSections.createProductSection(
-//                products: products, addToBasket: addToBasket, addToFavorite: addToFavorite(_:_:))
-//
-//            sections = [productsSection]
-        }
-        
-        presenter.publish(data: MainModel.Response(data: self.sections))
-    }
 }
 
+// MARK: - private methods
+private extension MainInteractor {
+    func toggleCheckmark() {
+    
+    }
+    
+    func toShareTask() {
+        
+    }
+    
+    func deleteTask() {
+        
+    }
+}
+// MARK: - Network
+private extension MainInteractor {
+    func getTodosData(completion: @escaping([Todo]) -> ()) {
+        dataSource.getTodosList { result in
+            switch result {
+                case .success(let success):
+                    completion(success.todos ?? [])
+                case .failure(let failure):
+                    print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - \(failure)\n")
+            }
+        }
+    }
+}

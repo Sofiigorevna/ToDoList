@@ -44,17 +44,19 @@ private extension TaskCardCell {
     
     func setupContentView() {
         contentView.addSubview(customContentView)
+        contentView.backgroundColor = Colors.background.color
         customContentView.layer.cornerRadius = Sizes.Radius.r300
     }
     
     func constraints() {
         customContentView.tAMIC()
-        NSLayoutConstraint.activate([
-            customContentView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Sizes.Spacing.S16.top),
-            customContentView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: Sizes.Spacing.S16.left),
-            customContentView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: Sizes.Spacing.S16.right),
-            customContentView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: Sizes.Spacing.S12.bottom)
-        ])
+        customContentView.fullScreen(contentView)
+//        NSLayoutConstraint.activate([
+//            customContentView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Sizes.Spacing.S16.top),
+//            customContentView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: Sizes.Spacing.S16.left),
+//            customContentView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: Sizes.Spacing.S16.right),
+//            customContentView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: Sizes.Spacing.S12.bottom)
+//        ])
     }
 }
 // MARK: - ITableViewCell

@@ -21,7 +21,8 @@ enum MainModel {
                 task: UserTask,
                 goToDetailTask: (() -> Void),
                 deleteTask: (() -> Void),
-                toShareTask: (() -> Void)
+                toShareTask: (() -> Void),
+                toggleIsDone: (() -> Void)
             )
         }
     }
