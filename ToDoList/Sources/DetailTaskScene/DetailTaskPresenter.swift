@@ -35,6 +35,20 @@ private extension DetailTaskPresenter {
     }
     
     func mapData(item: DetailTaskModel.Response.Item) -> ICellViewModel {
-       
+        switch item {
+            case .textView(
+                let text,
+                let placeholder,
+                let fontSize,
+                let textAction):
+                return TextViewViewModel(
+                    text: text,
+                    placeholder: placeholder,
+                    fontSize: fontSize,
+                    textAction: textAction)
+                
+            case .date(let date):
+                return DateViewModel(date: date)
+        }
     }
 }

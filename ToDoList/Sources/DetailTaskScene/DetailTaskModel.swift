@@ -17,7 +17,14 @@ enum DetailTaskModel {
         }
         
         enum Item {
-           
+            case date(date: Date)
+            
+            case textView(
+                text: String,
+                placeholder: String,
+                fontSize: CGFloat,
+                textAction: (String) -> ()
+            )
         }
     }
 }

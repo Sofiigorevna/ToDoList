@@ -87,7 +87,9 @@ private extension ModuleTableViewController {
         tableView.separatorStyle = .none
 
         tableView.registeringCellsInTable(
-            TaskCardCell.self
+            TaskCardCell.self,
+            TextViewCell.self,
+            DateCell.self
         )
         view.subviewsOnView(tableView)
         tableView.fullScreen()
