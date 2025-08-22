@@ -24,14 +24,7 @@ final class DateCell: UITableViewCell {
 extension DateCell: ITableViewCell {
     func configure(with viewModel: any ICellViewModel) {
         guard let viewModel = viewModel as? DateViewModel else { return }
-        
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ru_RU")
-        
-        if Calendar.current.isDateInToday(viewModel.date) {
-            formatter.dateFormat = "d MMMM"
-            label.text = formatter.string(from: viewModel.date)
-        }
+        label.text = viewModel.date
     }
 }
 

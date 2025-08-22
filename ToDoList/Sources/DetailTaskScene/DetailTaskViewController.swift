@@ -21,6 +21,12 @@ final class DetailTaskViewController: ModuleTableViewController, IActivityIndica
         showLoader()
         interactor?.loadData()
     }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Сохраняем изменения при уходе с экрана
+        interactor?.handleBackButton()
+    }
 }
 // MARK: - IDetailTaskView
 extension DetailTaskViewController: IDetailTaskView {

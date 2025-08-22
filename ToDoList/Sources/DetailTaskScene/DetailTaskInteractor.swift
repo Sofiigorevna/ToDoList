@@ -15,6 +15,10 @@ enum DetailTaskTitleSection: String {
 protocol IDetailTaskInteractor {
     /// Загрузить данные
     func loadData()
+    /// Сохранить изменения
+    func saveChanges()
+    /// Обработка нажатия кнопки back
+    func handleBackButton()
 }
 
 final class DetailTaskInteractor {
@@ -27,6 +31,11 @@ final class DetailTaskInteractor {
     private var sections = [DetailTaskModel.Response.DetailTaskSection]()
     private var currentTask: UserTask?
     
+    // Временные данные для редактирования
+    private var tempTitle: String = ""
+    private var tempDescription: String = ""
+    private var hasChanges: Bool = false
+    
     init(
         router: IDetailTaskRouter,
         presenter: IDetailTaskPresenter,
@@ -35,6 +44,58 @@ final class DetailTaskInteractor {
         self.router = router
         self.presenter = presenter
         self.taskID = taskID
+    }
+}
+    private func loadTaskByServerID(_ serverID: Int) {
+        self.taskManager.getAllTasks { [weak self] tasks in
+            guard let self = self else { return }
+            
+            // Ищем задачу по serverID
+            if let task = tasks.first(where: { $0.serverID == Int64(serverID) }) {
+                self.currentTask = task
+                self.tempTitle = task.displayTitle
+                self.tempDescription = task.displayDescription
+                self.sections.append(self.createTaskSection(with: task))
+                self.presenter.publish(data: DetailTaskModel.Response(data: self.sections))
+                
+                // Устанавливаем заголовок для существующей задачи
+                self.presenter.updateTitle(task.displayTitle)
+            } else {
+                // Задача не найдена, показываем ошибку или создаем новую
+                self.createNewTask()
+            }
+        }
+    }
+    
+    private func createNewTask() {
+        // Создаем пустую секцию для новой задачи
+        self.tempTitle = ""
+        self.tempDescription = ""
+        sections.append(createTaskSection())
+        presenter.publish(data: DetailTaskModel.Response(data: self.sections))
+        
+        // Устанавливаем заголовок для новой задачи
+        presenter.updateTitle("Новая задача")
+    }
+// MARK: - Creating Sections
+private extension DetailTaskInteractor {
+    func createTaskSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
+        let items: [DetailTaskModel.Response.Item] = [
+            .textView(
+                text: tempTitle.isEmpty ? (task?.displayTitle ?? "") : tempTitle,
+                placeholder: "Название задачи...",
+                fontSize: 20,
+                textAction: textForTitle),
+            
+            .date(date: task?.formattedCreationDate ?? ""),
+            
+            .textView(
+                text: tempDescription.isEmpty ? (task?.displayDescription ?? "") : tempDescription,
+                placeholder: "Описание задачи...",
+                fontSize: 15,
+                textAction: textForDescription),
+        ]
+        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.taskCard.rawValue), items: items)
     }
 }
 // MARK: - IDetailTaskInteractor
@@ -51,68 +112,66 @@ extension DetailTaskInteractor: IDetailTaskInteractor {
         }
     }
     
-    private func loadTaskByServerID(_ serverID: Int) {
-        taskManager.getAllTasks { [weak self] tasks in
-            guard let self = self else { return }
+    func saveChanges() {
+        // Проверяем, есть ли изменения
+        guard hasChanges else { return }
+        
+        if let currentTask = currentTask {
+            // Обновляем существующую задачу
+            let finalTitle = tempTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Без названия" : tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            let finalDescription = tempDescription.trimmingCharacters(in: .whitespacesAndNewlines)
             
-            // Ищем задачу по serverID
-            if let task = tasks.first(where: { $0.serverID == Int64(serverID) }) {
-                self.currentTask = task
-                self.sections.append(self.createCardSection(with: task))
-                self.presenter.publish(data: DetailTaskModel.Response(data: self.sections))
-                
-                // Устанавливаем заголовок для существующей задачи
-                self.presenter.updateTitle(task.displayTitle)
-            } else {
-                // Задача не найдена, показываем ошибку или создаем новую
-                self.createNewTask()
+            taskManager.updateTask(currentTask, title: finalTitle, description: finalDescription.isEmpty ? nil : finalDescription) { [weak self] success in
+                if success {
+                    self?.hasChanges = false
+                    print("Задача успешно обновлена")
+                } else {
+                    print("Ошибка при обновлении задачи")
+                }
+            }
+        } else {
+            // Создаем новую задачу
+            let finalTitle = tempTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Без названия" : tempTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            let finalDescription = tempDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            taskManager.addTask(title: finalTitle, description: finalDescription.isEmpty ? nil : finalDescription) { [weak self] success in
+                if success {
+                    self?.hasChanges = false
+                    print("Новая задача успешно создана")
+                } else {
+                    print("Ошибка при создании задачи")
+                }
             }
         }
     }
     
-    private func createNewTask() {
-        // Создаем пустую секцию для новой задачи
-        sections.append(createCardSection())
-        presenter.publish(data: DetailTaskModel.Response(data: self.sections))
-        
-        // Устанавливаем заголовок для новой задачи
-        presenter.updateTitle("Новая задача")
-    }
-}
-// MARK: - Creating Sections
-private extension DetailTaskInteractor {
-    func createCardSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
-        let items: [DetailTaskModel.Response.Item] = [
-            // Здесь будут элементы для редактирования задачи
-        ]
-        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.taskCard.rawValue), items: items)
-    }
-    
-    func createSections(with arts: [Any]) {
-        if arts.isEmpty {
-            
-//            let emptyImageSection = managerSections.createEmptyImageSection()
-//
-//            let twoTitlesSection = managerSections.createTwoTitlesSection()
-//
-//            let buttonSection = managerSections.createButtonSection(action: pressToButton)
-//
-//            sections = [emptyImageSection, twoTitlesSection, buttonSection]
-        } else {
-                       
-//            // Добавляет art в userDefaults (которые пришли с сервера, допустим добавленные с сайта)
-//            arts.forEach { [weak self] art in
-//                guard let self else { return }
-//                self.userDefaults.saveProductIsFavorite(product.slug ?? "")
-//            }
-//
-//            let artsSection = managerSections.createProductSection(
-//                products: products, addToBasket: addToBasket, addToFavorite: addToFavorite(_:_:))
-//
-//            sections = [productsSection]
-        }
-        
-        presenter.publish(data: DetailTaskModel.Response(data: self.sections))
+    func handleBackButton() {
+        // Сохраняем изменения при нажатии кнопки back
+        saveChanges()
     }
 }
 
+// MARK: - private methods
+private extension DetailTaskInteractor {
+    /// В модель сохраняются введённые пользователем текстовые данные для титла
+    func textForTitle(_ text: String) {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if tempTitle != trimmedText {
+            tempTitle = trimmedText
+            hasChanges = true
+            
+            // Обновляем заголовок экрана
+            let displayTitle = trimmedText.isEmpty ? "Новая задача" : trimmedText
+            presenter.updateTitle(displayTitle)
+        }
+    }
+    
+    /// В модель сохраняются введённые пользователем текстовые данные для описания
+    func textForDescription(_ text: String) {
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if tempDescription != trimmedText {
+            tempDescription = trimmedText
+            hasChanges = true
+        }
+    }
+}

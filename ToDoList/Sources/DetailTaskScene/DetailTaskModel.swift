@@ -17,7 +17,7 @@ enum DetailTaskModel {
         }
         
         enum Item {
-            case date(date: Date)
+            case date(date: String)
             
             case textView(
                 text: String,

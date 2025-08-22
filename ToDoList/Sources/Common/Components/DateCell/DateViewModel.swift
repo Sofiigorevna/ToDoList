@@ -8,9 +8,9 @@
 import Foundation
 
 final class DateViewModel: ICellViewModel {
-    var date: Date
+    var date: String
     
-    init(date: Date) {
+    init(date: String) {
         self.date = date
     }
     
