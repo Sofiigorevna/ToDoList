@@ -234,7 +234,6 @@ private extension MainViewController {
             }
         }
     }
-    
     /// Обновляет нижний отступ таблицы для учёта видимости , чтобы`Toolbar` не перекрывала контент.
     /// - Parameter inset: Новый нижний отступ таблицы.
      func updateTableViewBottomInset(to inset: CGFloat) {

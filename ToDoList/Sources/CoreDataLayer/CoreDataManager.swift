@@ -42,7 +42,7 @@ final class CoreDataManager: CoreDataManagerType {
         })
         return container
     }()
-
+    
     private lazy var context: NSManagedObjectContext = persistentContainer.viewContext
     
     // Background context for heavy operations

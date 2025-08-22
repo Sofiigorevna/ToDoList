@@ -226,7 +226,7 @@ private extension MainInteractor {
                     self?.updateTaskCell(task: task, animated: true)
                 }
             } else {
-                print("Failed to toggle task completion")
+                print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - Failed to toggle task completion \n")
             }
         }
     }
@@ -252,7 +252,7 @@ private extension MainInteractor {
                     self?.refreshData()
                 }
             } else {
-                print("Failed to delete task")
+                print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - Failed to delete task \n")
             }
         }
     }

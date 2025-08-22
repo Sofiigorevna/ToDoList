@@ -122,9 +122,8 @@ extension DetailTaskInteractor: IDetailTaskInteractor {
             taskManager.updateTask(currentTask, title: finalTitle, description: finalDescription.isEmpty ? nil : finalDescription) { [weak self] success in
                 if success {
                     self?.hasChanges = false
-                    print("Задача успешно обновлена")
                 } else {
-                    print("Ошибка при обновлении задачи")
+                    print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - Ошибка при обновлении задачи \n")
                 }
             }
         } else {
@@ -135,9 +134,8 @@ extension DetailTaskInteractor: IDetailTaskInteractor {
             taskManager.addTask(title: finalTitle, description: finalDescription.isEmpty ? nil : finalDescription) { [weak self] success in
                 if success {
                     self?.hasChanges = false
-                    print("Новая задача успешно создана")
                 } else {
-                    print("Ошибка при создании задачи")
+                    print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - Ошибка при создании задачи \n")
                 }
             }
         }
