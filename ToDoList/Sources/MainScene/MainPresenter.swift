@@ -21,7 +21,7 @@ protocol IMainPresenter {
     )
     /// Обновляет конкретную ячейку задачи
     func updateTaskCell(task: UserTask, animated: Bool)
-    
+    /// поделиться задачей
     func checkToShareView(id: Int, shareText: String)
 }
 

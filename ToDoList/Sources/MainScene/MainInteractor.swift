@@ -284,20 +284,20 @@ private extension MainInteractor {
     func getTodosData(completion: @escaping([UserTask]) -> ()) {
         dataSource.getTodosList { [weak self] result in
             switch result {
-                case .success(let success):
-                    guard let todos = success.todos else {
-                        completion([])
-                        return
-                    }
-                    
-                    // Маппим Todo в UserTask и сохраняем в Core Data
-                    self?.taskManager.saveTodosFromServer(todos) { userTasks in
-                        completion(userTasks)
-                    }
-                    
-                case .failure(let failure):
-                    print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - \(failure)\n")
+            case .success(let success):
+                guard let todos = success.todos else {
                     completion([])
+                    return
+                }
+                
+                // Маппим Todo в UserTask и сохраняем в Core Data
+                self?.taskManager.saveTodosFromServer(todos) { userTasks in
+                    completion(userTasks)
+                }
+                
+            case .failure(let failure):
+                print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - \(failure)\n")
+                completion([])
             }
         }
     }
