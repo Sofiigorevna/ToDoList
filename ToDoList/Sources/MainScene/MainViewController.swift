@@ -8,8 +8,9 @@
 import UIKit
 
 protocol IMainView: IModuleTableView {
-    func update(sections: [SectionViewModel])
-    func updateSilently(sections: [SectionViewModel])
+    func update(sections: [SectionViewModel], tasksCont: Int)
+    func updateSilently(sections: [SectionViewModel], tasksCont: Int)
+    func checkToShareView(id: Int, shareText: String)
 }
 
 final class MainViewController: ModuleTableViewController, IActivityIndicatorView {
@@ -42,24 +43,23 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         showLoader()
-        interactor?.loadDataWithBackgroundSync { [weak self] tasksCont in
-            guard let self = self else { return }
-            self.taskCount = tasksCont
-        }
+        interactor?.loadDataWithBackgroundSync()
     }
     
     @objc private func addNote() {
-        interactor?.openDetailTask(with: nil)
+        interactor?.createNewTask()
     }
     
     func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         updateTableViewBottomInset(to: toolbar.frame.height)
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let viewModel = cellViewModel(for: indexPath) as? TaskCardViewModel else { return }
-        interactor?.openDetailTask(with: viewModel.task.id)
-    }
+//    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        guard let viewModel = cellViewModel(for: indexPath) as? TaskCardViewModel else {
+//            return
+//        }
+//        interactor?.openDetailTask(with: viewModel.task)
+//    }
 }
 // MARK: - IMainView
 extension MainViewController: IMainView {
@@ -69,9 +69,26 @@ extension MainViewController: IMainView {
         hideLoader()
     }
     
-    func updateSilently(sections: [SectionViewModel]) {
+    func update(sections: [SectionViewModel], tasksCont: Int) {
         self.sections = sections
+        self.taskCount = tasksCont
         tableView.reloadData()
+        hideLoader()
+    }
+    
+    func updateSilently(sections: [SectionViewModel], tasksCont: Int) {
+        self.sections = sections
+        self.taskCount = tasksCont
+        tableView.reloadData()
+    }
+    
+    func checkToShareView(id: Int, shareText: String) {
+        let activityViewController = UIActivityViewController(
+            activityItems: [shareText],
+            applicationActivities: nil
+        )
+        
+        self.present(activityViewController, animated: true, completion: nil)
     }
 }
 
@@ -183,8 +200,9 @@ private extension MainViewController {
         // Ищем countItem в toolbar
         if let items = toolbar.items,
            let countItemIndex = items.firstIndex(where: { $0.title?.contains("зада") == true }) {
-            
-            toolbar.items?[countItemIndex].title = countText
+            DispatchQueue.main.async {
+                self.toolbar.items?[countItemIndex].title = countText
+            }
         }
     }
     

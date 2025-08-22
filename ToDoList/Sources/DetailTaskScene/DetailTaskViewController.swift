@@ -9,6 +9,7 @@ import UIKit
 
 protocol IDetailTaskView: IModuleTableView {
     func update(sections: [SectionViewModel])
+    func updateTitle(_ title: String)
 }
 
 final class DetailTaskViewController: ModuleTableViewController, IActivityIndicatorView {
@@ -27,5 +28,9 @@ extension DetailTaskViewController: IDetailTaskView {
         self.sections = sections
         tableView.reloadData()
         hideLoader()
+    }
+    
+    func updateTitle(_ title: String) {
+        self.title = title
     }
 }

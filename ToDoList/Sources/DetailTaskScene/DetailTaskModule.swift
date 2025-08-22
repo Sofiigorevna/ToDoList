@@ -15,7 +15,8 @@ enum DetailTaskModule {
 
         let interactor = DetailTaskInteractor(
             router: router,
-            presenter: presenter
+            presenter: presenter,
+            taskID: id
         )
         
         view.interactor = interactor

@@ -13,12 +13,8 @@ enum MainTitleSection: String {
 
 /// Протокол для работы с tasks
 protocol IMainInteractor {
-    /// Загрузить данные с сервера и локальной базы
-    func loadData(completion: @escaping(_ tasksCont: Int) -> ())
-    /// Загрузить только локальные данные
-    func loadLocalData(completion: @escaping(_ tasksCont: Int) -> ())
     /// Быстрая загрузка локальных данных + фоновая синхронизация с сервером
-    func loadDataWithBackgroundSync(completion: @escaping(_ tasksCont: Int) -> ())
+    func loadDataWithBackgroundSync()
     /// Поиск задач по тексту (по всем задачам - локальным и серверным)
     func searchTasks(with query: String, completion: @escaping(_ tasksCount: Int) -> ())
     /// Поиск только по локальным задачам
@@ -27,8 +23,10 @@ protocol IMainInteractor {
     func clearSearch(completion: @escaping(_ tasksCount: Int) -> ())
     /// переход на страницу
     ///
-    /// - Parameter id: id task
-    func openDetailTask(with id: Int?)
+    /// - Parameter task: задача для перехода
+    func openDetailTask(with task: UserTask)
+    /// создание новой задачи
+    func createNewTask()
 }
 
 final class MainInteractor {
@@ -72,7 +70,7 @@ extension MainInteractor: IMainInteractor {
             }
             
             // Обновляем UI
-            self.presenter.publish(data: MainModel.Response(data: self.sections))
+            self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
             completion(filteredTasks.count)
         }
     }
@@ -108,7 +106,7 @@ extension MainInteractor: IMainInteractor {
                 }
                 
                 // Обновляем UI
-                self.presenter.publish(data: MainModel.Response(data: self.sections))
+                self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
                 completion(localFilteredTasks.count)
             }
         }
@@ -116,7 +114,7 @@ extension MainInteractor: IMainInteractor {
     
     func clearSearch(completion: @escaping(_ tasksCount: Int) -> ()) {
         // Сбрасываем поиск и показываем все задачи (включая серверные)
-        loadDataWithBackgroundSync(completion: completion)
+        loadDataWithBackgroundSync()
     }
     
     func loadData(completion: @escaping(_ tasksCont: Int) -> ()) {
@@ -134,14 +132,21 @@ extension MainInteractor: IMainInteractor {
                 for task in allTasks {
                     self.sections.append(self.createCardSection(task: task))
                 }
-                self.presenter.publish(data: MainModel.Response(data: self.sections))
+                self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
                 completion(allTasks.count)
             }
         }
     }
     
-    func openDetailTask(with id: Int?) {
-        router.openDetailTask(with: id)
+    func openDetailTask(with task: UserTask) {
+        // Передаем serverID для серверных задач или nil для локальных
+        let serverID: Int? = task.serverID > 0 ? Int(task.serverID) : nil
+        router.openDetailTask(with: serverID)
+    }
+    
+    func createNewTask() {
+        // Передаем nil для создания новой задачи
+        router.openDetailTask(with: nil)
     }
     
     func loadLocalData(completion: @escaping(_ tasksCont: Int) -> ()) {
@@ -155,18 +160,15 @@ extension MainInteractor: IMainInteractor {
             for task in tasks {
                 self.sections.append(self.createCardSection(task: task))
             }
-            self.presenter.publish(data: MainModel.Response(data: self.sections))
+            self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
             completion(tasks.count)
         }
     }
     
-    func loadDataWithBackgroundSync(completion: @escaping(_ tasksCont: Int) -> ()) {
+    func loadDataWithBackgroundSync() {
         // Сначала быстро загружаем локальные данные
         loadLocalData { [weak self] localTasksCount in
             guard let self = self else { return }
-            
-            // Вызываем completion сразу с локальными данными
-            completion(localTasksCount)
             
             // Затем в фоне синхронизируем с сервером
             self.getTodosData { [weak self] serverTasks in
@@ -184,7 +186,7 @@ extension MainInteractor: IMainInteractor {
                     }
                     
                     // Обновляем UI с новыми данными (включая серверные) без скрытия индикатора
-                    self.presenter.updateDataSilently(data: MainModel.Response(data: self.sections))
+                    self.presenter.updateDataSilently(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
                 }
             }
         }
@@ -195,10 +197,18 @@ private extension MainInteractor {
     func createCardSection(task: UserTask) -> MainModel.Response.MainSection {
         let items: [MainModel.Response.Item] = [
             .taskCard(task: task,
-                      goToDetailTask: {},
-                      deleteTask: deleteTask,
-                      toShareTask: toShareTask,
-                      toggleIsDone: toggleCheckmark
+                      goToDetailTask: { [weak self] in
+                          self?.openDetailTask(with: task)
+                      },
+                      deleteTask: { [weak self] in
+                          self?.deleteTask(task)
+                      },
+                      toShareTask: { [weak self] in
+                          self?.toShareTask(task)
+                      },
+                      toggleIsDone: { [weak self] in
+                          self?.toggleCheckmark(task)
+                      }
                      )
         ]
         
@@ -208,16 +218,59 @@ private extension MainInteractor {
 
 // MARK: - private methods
 private extension MainInteractor {
-    func toggleCheckmark() {
-    
+    func toggleCheckmark(_ task: UserTask) {
+        taskManager.toggleTaskCompletion(task) { [weak self] success in
+            if success {
+                // Обновляем UI после успешного изменения
+                self?.refreshData()
+            } else {
+                print("Failed to toggle task completion")
+            }
+        }
     }
     
-    func toShareTask() {
+    func toShareTask(_ task: UserTask) {
+        // Создаем текст для шаринга
+        let shareText = """
+        Задача: \(task.displayTitle)
         
+        \(task.displayDescription)
+        
+        Статус: \(task.statusText)
+        Дата создания: \(task.formattedCreationDate)
+        """
+        presenter.checkToShareView(id: Int(task.serverID), shareText: shareText)
     }
     
-    func deleteTask() {
-        
+    func deleteTask(_ task: UserTask) {
+        taskManager.deleteTask(task) { [weak self] success in
+            if success {
+                // Обновляем UI после успешного удаления
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    self?.refreshData()
+                }
+            } else {
+                print("Failed to delete task")
+            }
+        }
+    }
+    
+    private func refreshData() {
+        // Обновляем данные после изменений
+        taskManager.getAllTasks { [weak self] tasks in
+            guard let self = self else { return }
+            
+            self.tasks = tasks
+            self.sections.removeAll()
+            
+            for task in tasks {
+                self.sections.append(self.createCardSection(task: task))
+            }
+            
+            DispatchQueue.main.async {
+                self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
+            }
+        }
     }
 }
 // MARK: - Network

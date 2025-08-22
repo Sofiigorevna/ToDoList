@@ -11,12 +11,16 @@ protocol IMainPresenter {
     /// Обновляет UI-контроллер на основе данных.
     /// - Parameter data: Ответ модели.
     func publish(
-        data: MainModel.Response
+        data: MainModel.Response,
+        tasksCont: Int
     )
     /// Обновляет данные без скрытия индикатора загрузки (для фоновой синхронизации)
     func updateDataSilently(
-        data: MainModel.Response
+        data: MainModel.Response,
+        tasksCont: Int
     )
+    
+    func checkToShareView(id: Int, shareText: String)
 }
 
 final class MainPresenter {
@@ -25,17 +29,23 @@ final class MainPresenter {
 // MARK: - IMainPresenter
 extension MainPresenter: IMainPresenter {
     func publish(
-        data: MainModel.Response
+        data: MainModel.Response,
+        tasksCont: Int
     ) {
         let sectionViewModel = data.data.map(mapData)
-        viewController?.update(sections: sectionViewModel)
+        viewController?.update(sections: sectionViewModel, tasksCont: tasksCont)
     }
     
     func updateDataSilently(
-        data: MainModel.Response
+        data: MainModel.Response,
+        tasksCont: Int
     ) {
         let sectionViewModel = data.data.map(mapData)
-        viewController?.updateSilently(sections: sectionViewModel)
+        viewController?.updateSilently(sections: sectionViewModel, tasksCont: tasksCont)
+    }
+    
+    func checkToShareView(id: Int, shareText: String) {
+        viewController?.checkToShareView(id: id, shareText: shareText)
     }
 }
 
@@ -54,7 +64,6 @@ private extension MainPresenter {
                 let toShareTask,
                 let toggleIsDone
             ):
-                
                 return TaskCardViewModel(
                     task: task,
                     goToDetailTask: goToDetailTask,

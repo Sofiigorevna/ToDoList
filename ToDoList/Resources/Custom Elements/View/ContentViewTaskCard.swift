@@ -71,14 +71,20 @@ final class ContentViewTaskCard: UIView {
     @objc private func pressToView() {
         cellModel?.goToDetailTask()
     }
+    
+    @objc private func pressToCheckmark() {
+        cellModel?.toggleIsDone()
+    }
 }
 
 private extension ContentViewTaskCard {
     func setupView() {
         setupContentView()
         constraints()
-        self.enable()
-        self.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(pressToView)))
+        stackView.enable()
+        checkmarkImageView.enable()
+        stackView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(pressToView)))
+        checkmarkImageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(pressToCheckmark)))
     }
     
     func setupContentView() {

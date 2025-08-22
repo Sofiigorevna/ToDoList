@@ -69,12 +69,13 @@ final class CoreDataManager: CoreDataManagerType {
             }
             
             let newTask = UserTask(entity: entityDescription, insertInto: self.backgroundContext)
+            let generateId = (1...1000).randomElement()
             newTask.id = UUID()
             newTask.title = title
             newTask.taskDescription = description
             newTask.creationDate = Date()
             newTask.isCompleted = false
-            newTask.serverID = 0
+            newTask.serverID = Int64(generateId ?? 1)
             
             self.saveBackgroundContext { success in
                 DispatchQueue.main.async {
