@@ -221,8 +221,10 @@ private extension MainInteractor {
     func toggleCheckmark(_ task: UserTask) {
         taskManager.toggleTaskCompletion(task) { [weak self] success in
             if success {
-                // Обновляем UI после успешного изменения
-                self?.refreshData()
+                // Обновляем только конкретную ячейку с анимацией
+                DispatchQueue.main.async {
+                    self?.updateTaskCell(task: task, animated: true)
+                }
             } else {
                 print("Failed to toggle task completion")
             }
@@ -253,6 +255,10 @@ private extension MainInteractor {
                 print("Failed to delete task")
             }
         }
+    }
+    
+    private func updateTaskCell(task: UserTask, animated: Bool) {
+        presenter.updateTaskCell(task: task, animated: animated)
     }
     
     private func refreshData() {

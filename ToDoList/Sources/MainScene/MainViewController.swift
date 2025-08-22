@@ -10,6 +10,7 @@ import UIKit
 protocol IMainView: IModuleTableView {
     func update(sections: [SectionViewModel], tasksCont: Int)
     func updateSilently(sections: [SectionViewModel], tasksCont: Int)
+    func updateTaskCell(task: UserTask, animated: Bool)
     func checkToShareView(id: Int, shareText: String)
 }
 
@@ -53,13 +54,6 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         updateTableViewBottomInset(to: toolbar.frame.height)
     }
-    
-//    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        guard let viewModel = cellViewModel(for: indexPath) as? TaskCardViewModel else {
-//            return
-//        }
-//        interactor?.openDetailTask(with: viewModel.task)
-//    }
 }
 // MARK: - IMainView
 extension MainViewController: IMainView {
@@ -80,6 +74,41 @@ extension MainViewController: IMainView {
         self.sections = sections
         self.taskCount = tasksCont
         tableView.reloadData()
+    }
+    
+    func updateTaskCell(task: UserTask, animated: Bool) {
+        for (sectionIndex, section) in sections.enumerated() {
+            if let rowIndex = section.viewModels.firstIndex(where: {
+                guard let taskViewModel = $0 as? TaskCardViewModel else { return false }
+                return taskViewModel.task.id == task.id
+            }) {
+                // Обновляем модель в секции
+                if let taskViewModel = section.viewModels[rowIndex] as? TaskCardViewModel {
+                    // Создаем новый TaskCardViewModel с обновленной задачей
+                    let updatedViewModel = TaskCardViewModel(
+                        task: task,
+                        goToDetailTask: taskViewModel.goToDetailTask,
+                        deleteTask: taskViewModel.deleteTask,
+                        toShareTask: taskViewModel.toShareTask,
+                        toggleIsDone: taskViewModel.toggleIsDone
+                    )
+                    
+                    // Обновляем модель в секции
+                    sections[sectionIndex].viewModels[rowIndex] = updatedViewModel
+                    
+                    let indexPath = IndexPath(row: rowIndex, section: sectionIndex)
+                    
+                    DispatchQueue.main.async {
+                        if let cell = self.tableView.cellForRow(at: indexPath) as? TaskCardCell {
+                            cell.updateTaskAppearance(task: task, animated: animated)
+                        } else {
+                            debugPrint("ячейка не обработана")
+                        }
+                    }
+                    return
+                }
+            }
+        }
     }
     
     func checkToShareView(id: Int, shareText: String) {

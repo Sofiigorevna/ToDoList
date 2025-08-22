@@ -65,6 +65,10 @@ extension TaskCardCell: ITableViewCell {
         cellModel = viewModel
         customContentView.configure(with: viewModel)
     }
+    
+    func updateTaskAppearance(task: UserTask, animated: Bool = true) {
+        customContentView.updateTaskAppearance(task: task, animated: animated)
+    }
 }
 // MARK: - UIContextMenuInteractionDelegate
 extension TaskCardCell: UIContextMenuInteractionDelegate {

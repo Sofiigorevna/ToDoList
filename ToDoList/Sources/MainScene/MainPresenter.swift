@@ -19,6 +19,8 @@ protocol IMainPresenter {
         data: MainModel.Response,
         tasksCont: Int
     )
+    /// Обновляет конкретную ячейку задачи
+    func updateTaskCell(task: UserTask, animated: Bool)
     
     func checkToShareView(id: Int, shareText: String)
 }
@@ -42,6 +44,10 @@ extension MainPresenter: IMainPresenter {
     ) {
         let sectionViewModel = data.data.map(mapData)
         viewController?.updateSilently(sections: sectionViewModel, tasksCont: tasksCont)
+    }
+    
+    func updateTaskCell(task: UserTask, animated: Bool) {
+        viewController?.updateTaskCell(task: task, animated: animated)
     }
     
     func checkToShareView(id: Int, shareText: String) {

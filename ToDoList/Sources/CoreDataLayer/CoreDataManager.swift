@@ -92,9 +92,8 @@ final class CoreDataManager: CoreDataManagerType {
             if let sortDescriptors = sortDescriptors {
                 fetchRequest.sortDescriptors = sortDescriptors
             } else {
-                // Default sorting: incomplete tasks first, then by creation date (newest first)
+                // Default sorting: only by creation date (newest first), without status sorting
                 fetchRequest.sortDescriptors = [
-                    NSSortDescriptor(key: "isCompleted", ascending: true),
                     NSSortDescriptor(key: "creationDate", ascending: false)
                 ]
             }

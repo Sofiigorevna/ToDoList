@@ -41,31 +41,59 @@ final class ContentViewTaskCard: UIView {
         descriptionLabel.text = task.displayDescription
         dateLabel.text = task.formattedCreationDate
         
+        updateTaskAppearance(task: task, animated: false)
+        
+        descriptionLabel.isHidden = task.taskDescription?.isEmpty ?? true
+    }
+    
+    func updateTaskAppearance(task: UserTask, animated: Bool = true) {
+        let duration: TimeInterval = animated ? 0.6 : 0.0
+        
         if task.isCompleted {
             checkmarkImageView.image = UIImage(systemName: task.statusIcon)
             checkmarkImageView.tintColor = Colors.accent.color
             
-            titleLabel.attributedText = NSAttributedString(
-                string: task.displayTitle,
-                attributes: [
-                    .strikethroughStyle: NSUnderlineStyle.single.rawValue,
-                    .foregroundColor: UIColor.systemGray
-                ]
-            )
-            
-            descriptionLabel.textColor = Colors.gray.color
+            if animated {
+                // Анимированное зачеркивание
+                UIView.animate(withDuration: duration, delay: 0.1, options: [.curveEaseInOut]) {
+                    self.titleLabel.attributedText = NSAttributedString(
+                        string: task.displayTitle,
+                        attributes: [
+                            .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                            .foregroundColor: UIColor.systemGray
+                        ]
+                    )
+                    self.descriptionLabel.textColor = Colors.gray.color
+                }
+            } else {
+                titleLabel.attributedText = NSAttributedString(
+                    string: task.displayTitle,
+                    attributes: [
+                        .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+                        .foregroundColor: UIColor.systemGray
+                    ]
+                )
+                descriptionLabel.textColor = Colors.gray.color
+            }
         } else {
             checkmarkImageView.image = UIImage(systemName: task.statusIcon)
             checkmarkImageView.tintColor = Colors.gray.color
             
-            titleLabel.attributedText = nil
-            titleLabel.text = task.displayTitle
-            titleLabel.textColor = .label
-            
-            descriptionLabel.textColor = .secondaryLabel
+            if animated {
+                // Анимированное убирание зачеркивания
+                UIView.animate(withDuration: duration, delay: 0.1, options: [.curveEaseInOut]) {
+                    self.titleLabel.attributedText = nil
+                    self.titleLabel.text = task.displayTitle
+                    self.titleLabel.textColor = .label
+                    self.descriptionLabel.textColor = .secondaryLabel
+                }
+            } else {
+                titleLabel.attributedText = nil
+                titleLabel.text = task.displayTitle
+                titleLabel.textColor = .label
+                descriptionLabel.textColor = .secondaryLabel
+            }
         }
-        
-        descriptionLabel.isHidden = task.taskDescription?.isEmpty ?? true
     }
     
     @objc private func pressToView() {
