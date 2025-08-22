@@ -20,6 +20,12 @@ final class TextViewCell: UITableViewCell {
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupView()
+        
+        textView.onHeightChange = { [weak self] in
+            guard let self, let tableView = superview as? UITableView else { return }
+            tableView.beginUpdates()
+            tableView.endUpdates()
+        }
     }
     
     required init?(coder: NSCoder) {

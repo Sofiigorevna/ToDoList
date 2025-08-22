@@ -8,7 +8,9 @@
 import UIKit
 
 enum DetailTaskTitleSection: String {
-    case taskCard
+    case title
+    case date
+    case description
 }
 
 /// Протокол для работы с tasks
@@ -22,12 +24,11 @@ protocol IDetailTaskInteractor {
 }
 
 final class DetailTaskInteractor {
-    
     private let router: IDetailTaskRouter
     private let presenter: IDetailTaskPresenter
     private let taskManager: TaskManagerType = TaskManager()
     private let taskID: Int?
-  
+    
     private var sections = [DetailTaskModel.Response.DetailTaskSection]()
     private var currentTask: UserTask?
     
@@ -46,56 +47,53 @@ final class DetailTaskInteractor {
         self.taskID = taskID
     }
 }
-    private func loadTaskByServerID(_ serverID: Int) {
-        self.taskManager.getAllTasks { [weak self] tasks in
-            guard let self = self else { return }
-            
-            // Ищем задачу по serverID
-            if let task = tasks.first(where: { $0.serverID == Int64(serverID) }) {
-                self.currentTask = task
-                self.tempTitle = task.displayTitle
-                self.tempDescription = task.displayDescription
-                self.sections.append(self.createTaskSection(with: task))
-                self.presenter.publish(data: DetailTaskModel.Response(data: self.sections))
-                
-                // Устанавливаем заголовок для существующей задачи
-                self.presenter.updateTitle(task.displayTitle)
-            } else {
-                // Задача не найдена, показываем ошибку или создаем новую
-                self.createNewTask()
-            }
-        }
-    }
-    
-    private func createNewTask() {
-        // Создаем пустую секцию для новой задачи
-        self.tempTitle = ""
-        self.tempDescription = ""
-        sections.append(createTaskSection())
-        presenter.publish(data: DetailTaskModel.Response(data: self.sections))
-        
-        // Устанавливаем заголовок для новой задачи
-        presenter.updateTitle("Новая задача")
-    }
 // MARK: - Creating Sections
 private extension DetailTaskInteractor {
-    func createTaskSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
+    func createTaskSections(with task: UserTask? = nil) {
+        sections = [
+            createTitleSection(with: task),
+            createDateSection(with: task),
+            createDescriptionSection(with: task)
+        ]
+        self.presenter.publish(data: DetailTaskModel.Response(data: self.sections))
+    }
+    
+    func createTitleSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
         let items: [DetailTaskModel.Response.Item] = [
             .textView(
                 text: tempTitle.isEmpty ? (task?.displayTitle ?? "") : tempTitle,
                 placeholder: "Название задачи...",
-                fontSize: 20,
-                textAction: textForTitle),
-            
-            .date(date: task?.formattedCreationDate ?? ""),
-            
+                fontSize: 30,
+                textAction: textForTitle)
+        ]
+        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.title.rawValue), items: items)
+    }
+    
+    func createDateSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
+        let items: [DetailTaskModel.Response.Item] = [
+            .date(date: task?.formattedCreationDate ?? formatCurrentDate())
+        ]
+        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.date.rawValue), items: items)
+    }
+    
+    private func formatCurrentDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "ru_RU")
+        
+        return formatter.string(from: Date())
+    }
+    
+    func createDescriptionSection(with task: UserTask? = nil) -> DetailTaskModel.Response.DetailTaskSection {
+        let items: [DetailTaskModel.Response.Item] = [
             .textView(
                 text: tempDescription.isEmpty ? (task?.displayDescription ?? "") : tempDescription,
                 placeholder: "Описание задачи...",
                 fontSize: 15,
                 textAction: textForDescription),
         ]
-        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.taskCard.rawValue), items: items)
+        return DetailTaskModel.Response.DetailTaskSection(section: .title(title: DetailTaskTitleSection.description.rawValue), items: items)
     }
 }
 // MARK: - IDetailTaskInteractor
@@ -153,16 +151,36 @@ extension DetailTaskInteractor: IDetailTaskInteractor {
 
 // MARK: - private methods
 private extension DetailTaskInteractor {
+    func loadTaskByServerID(_ serverID: Int) {
+        self.taskManager.getAllTasks { [weak self] tasks in
+            guard let self = self else { return }
+            
+            // Ищем задачу по serverID
+            if let task = tasks.first(where: { $0.serverID == Int64(serverID) }) {
+                self.currentTask = task
+                self.tempTitle = task.displayTitle
+                self.tempDescription = task.displayDescription
+                self.createTaskSections(with: task)
+            } else {
+                // Задача не найдена, показываем ошибку или создаем новую
+                self.createNewTask()
+            }
+        }
+    }
+    
+    func createNewTask() {
+        // Создаем пустую секцию для новой задачи
+        self.tempTitle = ""
+        self.tempDescription = ""
+        createTaskSections(with: nil)
+    }
+    
     /// В модель сохраняются введённые пользователем текстовые данные для титла
     func textForTitle(_ text: String) {
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if tempTitle != trimmedText {
             tempTitle = trimmedText
             hasChanges = true
-            
-            // Обновляем заголовок экрана
-            let displayTitle = trimmedText.isEmpty ? "Новая задача" : trimmedText
-            presenter.updateTitle(displayTitle)
         }
     }
     

@@ -13,9 +13,6 @@ protocol IDetailTaskPresenter {
     func publish(
         data: DetailTaskModel.Response
     )
-    /// Обновляет заголовок экрана
-    /// - Parameter title: Новый заголовок
-    func updateTitle(_ title: String)
 }
 
 final class DetailTaskPresenter {
@@ -28,10 +25,6 @@ extension DetailTaskPresenter: IDetailTaskPresenter {
     ) {
         let sectionViewModel = data.data.map(mapData)
         viewController?.update(sections: sectionViewModel)
-    }
-    
-    func updateTitle(_ title: String) {
-        viewController?.updateTitle(title)
     }
 }
 

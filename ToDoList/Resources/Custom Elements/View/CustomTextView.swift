@@ -12,6 +12,8 @@ protocol MaterialTextViewDelegate: AnyObject {
 }
 
 final class CustomTextView: UIView {
+    var onHeightChange: (() -> ())?
+    
     var text: String {
         get { textView.text }
         set {
@@ -53,7 +55,10 @@ final class CustomTextView: UIView {
 extension CustomTextView: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         guard textView.markedTextRange == nil else { return }
-        invalidateIntrinsicContentSize()
+        // Уведомляем систему о необходимости обновления макета
+        self.layoutIfNeeded()
+        onHeightChange?()
+        
         checkPlaceholder(textView.text)
         delegate?.textChangeTracking(textView.text)
     }

@@ -9,12 +9,16 @@ import UIKit
 
 protocol IDetailTaskView: IModuleTableView {
     func update(sections: [SectionViewModel])
-    func updateTitle(_ title: String)
 }
 
 final class DetailTaskViewController: ModuleTableViewController, IActivityIndicatorView {
     var interactor: IDetailTaskInteractor?
     internal var activityIndicatorView: UIActivityIndicatorView = UIActivityIndicatorView(style: .large)
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupView()
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -35,8 +39,12 @@ extension DetailTaskViewController: IDetailTaskView {
         tableView.reloadData()
         hideLoader()
     }
-    
-    func updateTitle(_ title: String) {
-        self.title = title
+}
+
+// MARK: - private methods
+private extension DetailTaskViewController {
+    func setupView() {
+        navigationController?.navigationBar.prefersLargeTitles = false
+        navigationController?.navigationBar.tintColor = Colors.accent.color
     }
 }

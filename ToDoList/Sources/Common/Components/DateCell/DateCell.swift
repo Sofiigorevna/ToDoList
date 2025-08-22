@@ -34,12 +34,12 @@ private extension DateCell {
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.textColor = Colors.gray.color
         label.textAlignment = .center
-        
+        contentView.backgroundColor = Colors.background.color
         contentView.addSubview(label)
         label.tAMIC()
         
         NSLayoutConstraint.activate([
-            label.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: Sizes.Spacing.S8.left),
+            label.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: Sizes.Spacing.S12.left),
             label.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: Sizes.Spacing.S8.top),
             label.heightAnchor.constraint(equalToConstant: Sizes.Height.h024),
             label.widthAnchor.constraint(greaterThanOrEqualToConstant: Sizes.Width.w090 + 10)

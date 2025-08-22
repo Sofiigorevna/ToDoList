@@ -129,7 +129,7 @@ private extension ContentViewTaskCard {
         
         titleLabel.font = .systemFont(ofSize: 17, weight: .medium)
         titleLabel.textColor = .label
-        titleLabel.numberOfLines = 0
+        titleLabel.numberOfLines = 2
         titleLabel.lineBreakMode = .byWordWrapping
         
         descriptionLabel.font = .systemFont(ofSize: 14)
