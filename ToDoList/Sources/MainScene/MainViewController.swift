@@ -9,6 +9,7 @@ import UIKit
 
 protocol IMainView: IModuleTableView {
     func update(sections: [SectionViewModel])
+    func updateSilently(sections: [SectionViewModel])
 }
 
 final class MainViewController: ModuleTableViewController, IActivityIndicatorView {
@@ -41,14 +42,23 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         showLoader()
-        interactor?.loadData { [weak self] tasksCont in
+        interactor?.loadDataWithBackgroundSync { [weak self] tasksCont in
             guard let self = self else { return }
             self.taskCount = tasksCont
         }
     }
     
     @objc private func addNote() {
-        print("Новая заметка")
+        interactor?.openDetailTask(with: nil)
+    }
+    
+    func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        updateTableViewBottomInset(to: toolbar.frame.height)
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let viewModel = cellViewModel(for: indexPath) as? TaskCardViewModel else { return }
+        interactor?.openDetailTask(with: viewModel.task.id)
     }
 }
 // MARK: - IMainView
@@ -58,12 +68,49 @@ extension MainViewController: IMainView {
         tableView.reloadData()
         hideLoader()
     }
+    
+    func updateSilently(sections: [SectionViewModel]) {
+        self.sections = sections
+        tableView.reloadData()
+    }
 }
 
 // MARK: - UISearchBarDelegate
 extension MainViewController: UISearchBarDelegate {
-    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        interactor?.handlingInteractionWithSearchField()
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // Если текст очищен (встроенной кнопкой X), сбрасываем поиск
+        if searchText.isEmpty {
+            clearSearch()
+            return
+        }
+        
+        // Поиск при вводе текста (с небольшой задержкой для оптимизации)
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(performSearch), object: nil) // ОТМЕНЯЕМ предыдущий запрос
+        perform(#selector(performSearch), with: searchText, afterDelay: 0.5)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        // Поиск при нажатии кнопки поиска
+        searchBar.resignFirstResponder()
+        performSearch(with: searchBar.text ?? "")
+    }
+
+    @objc private func performSearch(with searchText: String) {
+        showLoader()
+        interactor?.searchTasks(with: searchText) { [weak self] tasksCount in
+            guard let self = self else { return }
+            self.taskCount = tasksCount
+            hideLoader()
+        }
+    }
+    
+    private func clearSearch() {
+        showLoader()
+        interactor?.clearSearch { [weak self] tasksCount in
+            guard let self = self else { return }
+            self.taskCount = tasksCount
+            hideLoader()
+        }
     }
 }
 // MARK: - private methods
@@ -81,7 +128,7 @@ private extension MainViewController {
     func setupSearchController() {
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.hidesNavigationBarDuringPresentation = false
-        searchController.searchBar.placeholder = "Search"
+        searchController.searchBar.placeholder = "Поиск задач..."
         searchController.searchBar.delegate = self
         definesPresentationContext = true
         searchController.searchBar.sizeToFit()
@@ -139,5 +186,15 @@ private extension MainViewController {
             
             toolbar.items?[countItemIndex].title = countText
         }
+    }
+    
+    /// Обновляет нижний отступ таблицы для учёта видимости , чтобы`Toolbar` не перекрывала контент.
+    /// - Parameter inset: Новый нижний отступ таблицы.
+     func updateTableViewBottomInset(to inset: CGFloat) {
+        // Обновляем нижний инсет таблицы
+        var contentInset = tableView.contentInset
+        contentInset.bottom = inset
+        tableView.contentInset = contentInset
+        tableView.scrollIndicatorInsets = contentInset
     }
 }

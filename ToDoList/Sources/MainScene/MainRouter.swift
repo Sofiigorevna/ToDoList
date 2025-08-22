@@ -8,7 +8,7 @@
 import UIKit
 
 protocol IMainRouter {
-    func openDetailTask(with id: Int)
+    func openDetailTask(with id: Int?)
 }
 
 final class MainRouter {
@@ -16,7 +16,7 @@ final class MainRouter {
 }
 // MARK: - IMainRouter
 extension MainRouter: IMainRouter {
-    func openDetailTask(with id: Int) {
+    func openDetailTask(with id: Int?) {
         let vc = DetailTaskModule.build(with: id)
         if let navVC = transitionHandler?.navigationController {
             navVC.pushViewController(vc, animated: true)

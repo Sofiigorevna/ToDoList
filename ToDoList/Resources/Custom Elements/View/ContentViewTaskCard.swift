@@ -7,12 +7,13 @@
 
 import UIKit
 /// Используется в ячейке TaskCardCell
-final class ContentVIewTaskCard: UIView {
+final class ContentViewTaskCard: UIView {
     private let checkmarkImageView = UIImageView()
     private let titleLabel = UILabel()
     private let descriptionLabel = UILabel()
     private let dateLabel = UILabel()
     private let stackView = UIStackView()
+    private let separatorView = UIView()
     private var cellModel: TaskCardViewModel?
     
     override init(frame: CGRect) {
@@ -30,6 +31,7 @@ final class ContentVIewTaskCard: UIView {
         descriptionLabel.text = nil
         dateLabel.text = nil
         checkmarkImageView.image = nil
+        separatorView.backgroundColor = Colors.lightGray.color
     }
     
     func configure(with viewModel: TaskCardViewModel) {
@@ -71,7 +73,7 @@ final class ContentVIewTaskCard: UIView {
     }
 }
 
-private extension ContentVIewTaskCard {
+private extension ContentViewTaskCard {
     func setupView() {
         setupContentView()
         constraints()
@@ -80,7 +82,7 @@ private extension ContentVIewTaskCard {
     }
     
     func setupContentView() {
-        [checkmarkImageView, stackView].forEach { view in
+        [checkmarkImageView, stackView, separatorView].forEach { view in
             self.subviewsOnView(view)
         }
         
@@ -94,10 +96,12 @@ private extension ContentVIewTaskCard {
         titleLabel.font = .systemFont(ofSize: 17, weight: .medium)
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 0
+        titleLabel.lineBreakMode = .byWordWrapping
         
         descriptionLabel.font = .systemFont(ofSize: 14)
         descriptionLabel.textColor = .secondaryLabel
         descriptionLabel.numberOfLines = 2
+        descriptionLabel.lineBreakMode = .byTruncatingTail
         
         dateLabel.font = .systemFont(ofSize: 12)
         dateLabel.textColor = .tertiaryLabel
@@ -105,23 +109,35 @@ private extension ContentVIewTaskCard {
         stackView.axis = .vertical
         stackView.spacing = 4
         stackView.alignment = .leading
+        stackView.distribution = .fill
+        
+        // Настройка разделительной полосы
+        separatorView.backgroundColor = Colors.lightGray.color
+        separatorView.layer.opacity = 0.2
+        separatorView.layer.cornerRadius = 0.5 // Половина высоты для скругления
     }
     
     func constraints() {
-        [checkmarkImageView, titleLabel, descriptionLabel, dateLabel, stackView].forEach { view in
+        [checkmarkImageView, titleLabel, descriptionLabel, dateLabel, stackView, separatorView].forEach { view in
             view.tAMIC()
         }
         
         NSLayoutConstraint.activate([
             checkmarkImageView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Sizes.Spacing.S8.left),
-            checkmarkImageView.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            checkmarkImageView.topAnchor.constraint(equalTo: self.topAnchor, constant: Sizes.Spacing.S12.top),
             checkmarkImageView.widthAnchor.constraint(equalToConstant: Sizes.Height.h028),
             checkmarkImageView.heightAnchor.constraint(equalToConstant: Sizes.Width.w028),
             
             stackView.leftAnchor.constraint(equalTo: checkmarkImageView.rightAnchor, constant: Sizes.Spacing.S12.left),
             stackView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: Sizes.Spacing.S16.right),
-            stackView.topAnchor.constraint(equalTo: checkmarkImageView.topAnchor, constant: Sizes.Spacing.S2.top),
-            stackView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: Sizes.Spacing.S12.bottom)
+            stackView.topAnchor.constraint(equalTo: self.topAnchor, constant: Sizes.Spacing.S12.top),
+            stackView.bottomAnchor.constraint(equalTo: separatorView.topAnchor, constant: Sizes.Spacing.S8.bottom),
+            
+            // Разделительная полоса
+            separatorView.leftAnchor.constraint(equalTo: self.leftAnchor, constant: Sizes.Spacing.S8.left),
+            separatorView.rightAnchor.constraint(equalTo: self.rightAnchor, constant: Sizes.Spacing.S8.right),
+            separatorView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: Sizes.Spacing.S12.bottom),
+            separatorView.heightAnchor.constraint(equalToConstant: 1.0)
         ])
     }
 }

@@ -70,4 +70,22 @@ extension UserTask {
         
         return titleLower.contains(searchLower) || descriptionLower.contains(searchLower)
     }
+    
+    // MARK: - Mapping from DTO
+    
+    static func createFromTodo(_ todo: Todo, in context: NSManagedObjectContext) -> UserTask {
+        let userTask = UserTask(context: context)
+        userTask.id = UUID()
+        userTask.serverID = Int64(todo.id ?? 0)
+        userTask.title = todo.todo
+        userTask.taskDescription = nil // У Todo нет описания, можно оставить nil или добавить дефолтное значение
+        userTask.isCompleted = todo.completed ?? false
+        userTask.creationDate = Date() // Используем текущую дату, так как в Todo нет даты создания
+        
+        return userTask
+    }
+    
+    static func createFromTodos(_ todos: [Todo], in context: NSManagedObjectContext) -> [UserTask] {
+        return todos.map { createFromTodo($0, in: context) }
+    }
 }

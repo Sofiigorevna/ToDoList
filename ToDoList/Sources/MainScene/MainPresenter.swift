@@ -13,6 +13,10 @@ protocol IMainPresenter {
     func publish(
         data: MainModel.Response
     )
+    /// Обновляет данные без скрытия индикатора загрузки (для фоновой синхронизации)
+    func updateDataSilently(
+        data: MainModel.Response
+    )
 }
 
 final class MainPresenter {
@@ -25,6 +29,13 @@ extension MainPresenter: IMainPresenter {
     ) {
         let sectionViewModel = data.data.map(mapData)
         viewController?.update(sections: sectionViewModel)
+    }
+    
+    func updateDataSilently(
+        data: MainModel.Response
+    ) {
+        let sectionViewModel = data.data.map(mapData)
+        viewController?.updateSilently(sections: sectionViewModel)
     }
 }
 

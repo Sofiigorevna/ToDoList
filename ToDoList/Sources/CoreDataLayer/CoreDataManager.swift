@@ -20,7 +20,11 @@ protocol CoreDataManagerType {
     
     // MARK: - Context Management
     func saveContext(completion: @escaping (Bool) -> Void)
+    func saveBackgroundContext(completion: @escaping (Bool) -> Void)
     func rollbackContext()
+    
+    // MARK: - Context Access
+    var backgroundContext: NSManagedObjectContext { get }
 }
 
 final class CoreDataManager: CoreDataManagerType {
@@ -42,7 +46,7 @@ final class CoreDataManager: CoreDataManagerType {
     private lazy var context: NSManagedObjectContext = persistentContainer.viewContext
     
     // Background context for heavy operations
-    private lazy var backgroundContext: NSManagedObjectContext = {
+    lazy var backgroundContext: NSManagedObjectContext = {
         let context = persistentContainer.newBackgroundContext()
         context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return context
@@ -230,7 +234,7 @@ final class CoreDataManager: CoreDataManagerType {
         }
     }
     
-    private func saveBackgroundContext(completion: @escaping (Bool) -> Void) {
+    func saveBackgroundContext(completion: @escaping (Bool) -> Void) {
         guard backgroundContext.hasChanges else {
             completion(true)
             return

@@ -9,7 +9,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 final class TaskCardCell: UITableViewCell {
-    private let customContentView = ContentVIewTaskCard()
+    private let customContentView = ContentViewTaskCard()
     
     private let editTitleButton: String = FixedPhrases.edit
     private let toShareTitleButton: String = FixedPhrases.toShare
@@ -50,7 +50,12 @@ private extension TaskCardCell {
     
     func constraints() {
         customContentView.tAMIC()
-        customContentView.fullScreen(contentView)
+        NSLayoutConstraint.activate([
+            customContentView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Sizes.Spacing.S8.top),
+            customContentView.leftAnchor.constraint(equalTo: contentView.leftAnchor, constant: Sizes.Spacing.S8.left),
+            customContentView.rightAnchor.constraint(equalTo: contentView.rightAnchor, constant: Sizes.Spacing.S8.right),
+            customContentView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: Sizes.Spacing.S8.bottom),
+        ])
     }
 }
 // MARK: - ITableViewCell

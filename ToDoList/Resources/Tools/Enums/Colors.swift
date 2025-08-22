@@ -14,21 +14,24 @@ enum Colors {
     case secondaryLabel
     case accent
     case gray
+    case lightGray
     
     var color: UIColor {
         switch self {
-            case .background:
-                return .systemBackground
-            case .secondaryBackground:
-                return .secondarySystemBackground
-            case .label:
-                return .label
-            case .secondaryLabel:
-                return .secondaryLabel
-            case .accent:
-                return .systemYellow
-                case .gray:
-                return .systemGray
+        case .background:
+            return .systemBackground
+        case .secondaryBackground:
+            return .secondarySystemBackground
+        case .label:
+            return .label
+        case .secondaryLabel:
+            return .secondaryLabel
+        case .accent:
+            return .systemYellow
+        case .gray:
+            return .systemGray
+        case .lightGray:
+            return .lightGray
         }
     }
 }

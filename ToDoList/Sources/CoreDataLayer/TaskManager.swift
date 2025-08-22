@@ -33,6 +33,7 @@ protocol TaskManagerType {
     func getAllTasks(completion: @escaping ([UserTask]) -> Void)
     func getCompletedTasks(completion: @escaping ([UserTask]) -> Void)
     func getIncompleteTasks(completion: @escaping ([UserTask]) -> Void)
+    func getServerTasks(completion: @escaping ([UserTask]) -> Void)
     func searchTasks(
         with query: String,
         completion: @escaping ([UserTask]) -> Void)
@@ -40,6 +41,9 @@ protocol TaskManagerType {
     // MARK: - Data Management
     func saveChanges(completion: @escaping (Bool) -> Void)
     func clearAllTasks(completion: @escaping (Bool) -> Void)
+    
+    // MARK: - Server Data Integration
+    func saveTodosFromServer(_ todos: [Todo], completion: @escaping ([UserTask]) -> Void)
 }
 
 final class TaskManager: TaskManagerType {
@@ -149,6 +153,17 @@ final class TaskManager: TaskManagerType {
         }
     }
     
+    func getServerTasks(completion: @escaping ([UserTask]) -> Void) {
+        backgroundQueue.async {
+            self.coreDataManager.fetchAllTasks(sortedBy: nil) { allTasks in
+                let serverTasks = allTasks.filter { $0.serverID > 0 }
+                DispatchQueue.main.async {
+                    completion(serverTasks)
+                }
+            }
+        }
+    }
+    
     func searchTasks(with query: String, completion: @escaping ([UserTask]) -> Void) {
         backgroundQueue.async {
             self.coreDataManager.fetchAllTasks(sortedBy: nil) { allTasks in
@@ -173,7 +188,7 @@ final class TaskManager: TaskManagerType {
     
     func saveChanges(completion: @escaping (Bool) -> Void) {
         backgroundQueue.async {
-            self.coreDataManager.saveContext { success in
+            self.coreDataManager.saveBackgroundContext { success in
                 DispatchQueue.main.async {
                     completion(success)
                 }
@@ -186,6 +201,54 @@ final class TaskManager: TaskManagerType {
             self.coreDataManager.deleteAllTasks { success in
                 DispatchQueue.main.async {
                     completion(success)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Server Data Integration
+    func saveTodosFromServer(_ todos: [Todo], completion: @escaping ([UserTask]) -> Void) {
+        backgroundQueue.async {
+            // Получаем существующие задачи
+            self.coreDataManager.fetchAllTasks(sortedBy: nil) { [weak self] existingTasks in
+                guard let self = self else { return }
+                
+                // Создаем словарь существующих задач по serverID
+                var existingTasksDict: [Int64: UserTask] = [:]
+                for task in existingTasks {
+                    if task.serverID > 0 {
+                        existingTasksDict[task.serverID] = task
+                    }
+                }
+                
+                // Обрабатываем задачи с сервера
+                var updatedTasks: [UserTask] = []
+                
+                for todo in todos {
+                    if let serverID = todo.id {
+                        if let existingTask = existingTasksDict[Int64(serverID)] {
+                            // Обновляем существующую задачу
+                            existingTask.title = todo.todo
+                            existingTask.isCompleted = todo.completed ?? false
+                            updatedTasks.append(existingTask)
+                        } else {
+                            // Создаем новую задачу
+                            let newTask = UserTask.createFromTodo(todo, in: self.coreDataManager.backgroundContext)
+                            updatedTasks.append(newTask)
+                        }
+                    }
+                }
+                
+                // Сохраняем контекст
+                self.coreDataManager.saveBackgroundContext { success in
+                    DispatchQueue.main.async {
+                        if success {
+                            completion(updatedTasks)
+                        } else {
+                            print("Failed to save tasks from server")
+                            completion([])
+                        }
+                    }
                 }
             }
         }
