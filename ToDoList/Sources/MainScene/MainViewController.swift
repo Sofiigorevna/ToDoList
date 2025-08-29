@@ -68,6 +68,67 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         updateTableViewBottomInset(to: toolbar.frame.height)
     }
+    
+    // MARK: - Swipe Actions
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard indexPath.section < sections.count,
+              indexPath.row < sections[indexPath.section].viewModels.count,
+              let taskViewModel = sections[indexPath.section].viewModels[indexPath.row] as? TaskCardViewModel else {
+            return nil
+        }
+        
+        let task = taskViewModel.task
+        
+        // Действие удаления
+        let deleteAction = UIContextualAction(
+            style: .destructive,
+            title: FixedPhrases.delete) { [weak self] (action, view, completion) in
+            self?.showDeleteConfirmation(for: task) {
+                completion(true)
+            }
+        }
+        deleteAction.backgroundColor = .systemRed
+        deleteAction.image = Images.trash.image
+        
+        // Действие редактирования
+        let editAction = UIContextualAction(
+            style: .normal,
+            title: FixedPhrases.edit) { [weak self] (action, view, completion) in
+            self?.interactor?.openDetailTask(with: task)
+            completion(true)
+        }
+        editAction.backgroundColor = .systemBlue
+        editAction.image = Images.pencil.image
+        
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
+        configuration.performsFirstActionWithFullSwipe = false
+        
+        return configuration
+    }
+    
+    func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard indexPath.section < sections.count,
+              indexPath.row < sections[indexPath.section].viewModels.count,
+              let taskViewModel = sections[indexPath.section].viewModels[indexPath.row] as? TaskCardViewModel else {
+            return nil
+        }
+            
+        // Действие шаринга
+        let shareAction = UIContextualAction(
+            style: .normal,
+            title: FixedPhrases.toShare) { [weak self] (action, view, completion) in
+            taskViewModel.toShareTask()
+            completion(true)
+        }
+        shareAction.backgroundColor = .systemPurple
+        shareAction.image = Images.shared.image
+        
+        let configuration = UISwipeActionsConfiguration(actions: [shareAction])
+        configuration.performsFirstActionWithFullSwipe = false
+        
+        return configuration
+    }
 }
 // MARK: - IMainView
 extension MainViewController: IMainView {
@@ -175,7 +236,11 @@ extension MainViewController: UISearchBarDelegate {
         }
         
         // Поиск при вводе текста (с небольшой задержкой для оптимизации)
-        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(performSearch), object: nil) // ОТМЕНЯЕМ предыдущий запрос
+        NSObject.cancelPreviousPerformRequests(
+            withTarget: self,
+            selector: #selector(performSearch),
+            object: nil
+        ) // ОТМЕНЯЕМ предыдущий запрос
         perform(#selector(performSearch), with: searchText, afterDelay: 0.5)
     }
     
@@ -216,6 +281,8 @@ private extension MainViewController {
         setupFilterButton()
         setupSortButton()
         navigationItem.rightBarButtonItems = [filterButton, sortButton]
+        
+
     }
     
     func setupSearchController() {
@@ -323,5 +390,38 @@ private extension MainViewController {
         contentInset.bottom = inset
         tableView.contentInset = contentInset
         tableView.scrollIndicatorInsets = contentInset
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func showDeleteConfirmation(for task: UserTask, completion: @escaping () -> Void) {
+        let alertController = UIAlertController(
+            title: "Удалить задачу",
+            message: "Вы уверены, что хотите удалить задачу \"\(task.displayTitle)\"?",
+            preferredStyle: .alert
+        )
+        
+        let deleteAction = UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+            // Находим TaskCardViewModel для этой задачи и вызываем deleteTask
+            for section in self?.sections ?? [] {
+                if let taskViewModel = section.viewModels.first(where: { 
+                    guard let vm = $0 as? TaskCardViewModel else { return false }
+                    return vm.task.id == task.id 
+                }) as? TaskCardViewModel {
+                    taskViewModel.deleteTask()
+                    break
+                }
+            }
+            completion()
+        }
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { _ in
+            completion()
+        }
+        
+        alertController.addAction(deleteAction)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true)
     }
 }

@@ -78,19 +78,23 @@ extension TaskCardCell: UIContextMenuInteractionDelegate {
     ) -> UIContextMenuConfiguration? {
         return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { _ in
             // Редактировать 
-            let edit = UIAction(title: self.editTitleButton, image: UIImage(systemName: "pencil")) { _ in
+            let edit = UIAction(
+                title: self.editTitleButton,
+                image: Images.pencil.image) { _ in
                 self.cellModel?.goToDetailTask()
             }
             
             // Поделиться
-            let toShare = UIAction(title: self.toShareTitleButton, image: UIImage(systemName: "square.and.arrow.up")) { _ in
+            let toShare = UIAction(
+                title: self.toShareTitleButton,
+                image: Images.shared.image) { _ in
                 self.cellModel?.toShareTask()
             }
             
             // Удалить
             let delete = UIAction(
                 title: self.deleteTitleButton,
-                image: UIImage(systemName: "trash"),
+                image: Images.trash.image,
                 attributes: .destructive
             ) { _ in
                 self.cellModel?.deleteTask()
@@ -107,10 +111,13 @@ extension TaskCardCell: UIContextMenuInteractionDelegate {
         // Создаем preview только для View
         let parameters = UIPreviewParameters()
         parameters.backgroundColor = .clear
-        parameters.visiblePath = UIBezierPath(roundedRect: customContentView.bounds,
-                                              cornerRadius: customContentView.layer.cornerRadius)
+        parameters.visiblePath = UIBezierPath(
+            roundedRect: customContentView.bounds,
+            cornerRadius: customContentView.layer.cornerRadius)
         
-        return UITargetedPreview(view: customContentView, parameters: parameters)
+        return UITargetedPreview(
+            view: customContentView,
+            parameters: parameters)
     }
     
     func contextMenuInteraction(
@@ -120,9 +127,12 @@ extension TaskCardCell: UIContextMenuInteractionDelegate {
         // Аналогично для dismiss preview
         let parameters = UIPreviewParameters()
         parameters.backgroundColor = .clear
-        parameters.visiblePath = UIBezierPath(roundedRect: customContentView.bounds,
-                                              cornerRadius: customContentView.layer.cornerRadius)
+        parameters.visiblePath = UIBezierPath(
+            roundedRect: customContentView.bounds,
+            cornerRadius: customContentView.layer.cornerRadius)
         
-        return UITargetedPreview(view: customContentView, parameters: parameters)
+        return UITargetedPreview(
+            view: customContentView,
+            parameters: parameters)
     }
 }

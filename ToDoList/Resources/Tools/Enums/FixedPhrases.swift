@@ -12,4 +12,5 @@ enum FixedPhrases {
     static let toShare: String = "Поделиться"
     static let delete: String = "Удалить"
     static let cancel: String = "Отмена"
+    
 }
