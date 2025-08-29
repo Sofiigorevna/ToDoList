@@ -11,6 +11,8 @@ enum Images: String {
     case squarePencil = "square.and.pencil"
     case checkmark = "checkmark.circle.fill"
     case circle = "circle"
+    case filter = "line.3.horizontal.decrease.circle"
+    case sort = "arrow.up.arrow.down"
     
     var image: UIImage? {
         return UIImage(systemName: self.rawValue)

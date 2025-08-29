@@ -12,15 +12,21 @@ protocol IMainView: IModuleTableView {
     func updateSilently(sections: [SectionViewModel], tasksCont: Int)
     func updateTaskCell(task: UserTask, animated: Bool)
     func checkToShareView(id: Int, shareText: String)
+    func pushToAlertForSort(_ typesAlert: [SortTypes])
+    func pushToAlertForFilter(_ typesAlert: [FilterTypes])
+    
 }
 
 final class MainViewController: ModuleTableViewController, IActivityIndicatorView {
     var interactor: IMainInteractor?
-    
+
     private let toolbar = UIToolbar()
     internal var activityIndicatorView: UIActivityIndicatorView = UIActivityIndicatorView(style: .large)
     private let searchController = UISearchController(searchResultsController: nil)
-    
+    private var filterButton = UIBarButtonItem()
+    private var sortButton = UIBarButtonItem()
+    private let cancelTitleButton = FixedPhrases.cancel
+
     private var taskCount: Int = 0 {
         didSet {
             updateToolbarTaskCount(taskCount)
@@ -49,6 +55,14 @@ final class MainViewController: ModuleTableViewController, IActivityIndicatorVie
     
     @objc private func addNote() {
         interactor?.createNewTask()
+    }
+    
+    @objc private func pressToFilter() {
+        interactor?.pushToAlertFilterType()
+    }
+    
+    @objc private func pressToSort() {
+        interactor?.pushToAlertSortType()
     }
     
     func tableView(_ tableView: UITableView, didEndDisplaying cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -119,6 +133,36 @@ extension MainViewController: IMainView {
         
         self.present(activityViewController, animated: true, completion: nil)
     }
+    
+    func pushToAlertForSort(_ typesAlert: [SortTypes]) {
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        typesAlert.forEach { type in
+            alertController.addAction(UIAlertAction(title: type.rawValue, style: .default) { _ in
+                self.interactor?.newLoadView(typeSort: type)
+            })
+        }
+        
+        let cancelAction = UIAlertAction(title: cancelTitleButton, style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true)
+    }
+    
+    func pushToAlertForFilter(_ typesAlert: [FilterTypes]) {
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        typesAlert.forEach { type in
+            alertController.addAction(UIAlertAction(title: type.rawValue, style: .default) { _ in
+                self.interactor?.newLoadView(typeFilter: type)
+            })
+        }
+        
+        let cancelAction = UIAlertAction(title: cancelTitleButton, style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        present(alertController, animated: true)
+    }
 }
 
 // MARK: - UISearchBarDelegate
@@ -169,6 +213,9 @@ private extension MainViewController {
         self.navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         setupToolbar()
+        setupFilterButton()
+        setupSortButton()
+        navigationItem.rightBarButtonItems = [filterButton, sortButton]
     }
     
     func setupSearchController() {
@@ -180,6 +227,40 @@ private extension MainViewController {
         searchController.searchBar.sizeToFit()
         searchController.searchBar.showsCancelButton = false
         searchController.searchBar.searchTextField.backgroundColor = Colors.secondaryBackground.color
+    }
+    
+    func setupFilterButton() {
+        filterButton = UIBarButtonItem(
+            image: Images.filter.image?
+            .withConfiguration(
+                UIImage.SymbolConfiguration(
+                    pointSize: 24,
+                    weight: .medium,
+                    scale: .default
+                )
+            ),
+        style: .plain,
+        target: self,
+        action: #selector(pressToFilter)
+    )
+        filterButton.tintColor = Colors.accent.color
+    }
+    
+    func setupSortButton() {
+        sortButton = UIBarButtonItem(
+            image: Images.sort.image?
+            .withConfiguration(
+                UIImage.SymbolConfiguration(
+                    pointSize: 20,
+                    weight: .medium,
+                    scale: .default
+                )
+            ),
+        style: .plain,
+        target: self,
+        action: #selector(pressToSort)
+    )
+        sortButton.tintColor = Colors.accent.color
     }
     
     func setupToolbar() {

@@ -27,10 +27,15 @@ protocol IMainInteractor {
     func openDetailTask(with task: UserTask)
     /// создание новой задачи
     func createNewTask()
+    /// фильтр по статусу (все/выполненные/не выполненные)
+    func newLoadView(typeFilter: FilterTypes)
+    /// сортировка (не выполненные сначала, затем по дате создания)
+    func newLoadView(typeSort: SortTypes)
+    func pushToAlertFilterType()
+    func pushToAlertSortType()
 }
 
 final class MainInteractor {
-    
     private let router: IMainRouter
     private let presenter: IMainPresenter
     private let dataSource = NetworkManager.shared
@@ -38,6 +43,11 @@ final class MainInteractor {
     
     private var tasks: [UserTask] = []
     private var sections = [MainModel.Response.MainSection]()
+    
+    // Состояние фильтрации и сортировки
+    private var currentFilter: FilterTypes = .all
+    private var currentSort: SortTypes = .defaultSort
+    private var originalTasks: [UserTask] = [] // Сохраняем оригинальные задачи для сброса фильтров
     
     init(
         router: IMainRouter,
@@ -52,9 +62,10 @@ extension MainInteractor: IMainInteractor {
     func searchTasks(with query: String, completion: @escaping(_ tasksCount: Int) -> ()) {
         sections.removeAll()
         
-        // Если запрос пустой, показываем все задачи
+        // Если запрос пустой, применяем текущие фильтры и сортировку
         guard !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            loadLocalData(completion: completion)
+            applyFiltersAndSort()
+            completion(tasks.count)
             return
         }
         
@@ -113,8 +124,9 @@ extension MainInteractor: IMainInteractor {
     }
     
     func clearSearch(completion: @escaping(_ tasksCount: Int) -> ()) {
-        // Сбрасываем поиск и показываем все задачи (включая серверные)
-        loadDataWithBackgroundSync()
+        // Сбрасываем поиск и применяем текущие фильтры и сортировку
+        applyFiltersAndSort()
+        completion(tasks.count)
     }
     
     func loadData(completion: @escaping(_ tasksCont: Int) -> ()) {
@@ -157,6 +169,7 @@ extension MainInteractor: IMainInteractor {
             guard let self = self else { return }
             
             self.tasks = tasks
+            self.originalTasks = tasks // Сохраняем оригинальные задачи
             for task in tasks {
                 self.sections.append(self.createCardSection(task: task))
             }
@@ -179,6 +192,7 @@ extension MainInteractor: IMainInteractor {
                     guard let self = self else { return }
                     
                     self.tasks = allTasks
+                    self.originalTasks = allTasks // Сохраняем оригинальные задачи
                     self.sections.removeAll()
                     
                     for task in allTasks {
@@ -189,6 +203,41 @@ extension MainInteractor: IMainInteractor {
                     self.presenter.updateDataSilently(data: MainModel.Response(data: self.sections), tasksCont: tasks.count)
                 }
             }
+        }
+    }
+    
+    /// Открывает Alert для выбора категории filter
+    func pushToAlertFilterType() {
+        presenter.updateFilterData(FilterTypes.types)
+    }
+    
+    func pushToAlertSortType() {
+        presenter.updateSortData(SortTypes.types)
+    }
+    
+    func newLoadView(typeFilter: FilterTypes) {
+        currentFilter = typeFilter
+        
+        // Если выбран фильтр "Все" и текущая сортировка "По умолчанию", загружаем как при первой загрузке
+        if typeFilter == .all && currentSort == .defaultSort {
+            loadLocalData { _ in
+                // Данные уже загружены и отображены
+            }
+        } else {
+            applyFiltersAndSort()
+        }
+    }
+    
+    func newLoadView(typeSort: SortTypes) {
+        currentSort = typeSort
+        
+        // Если выбрана сортировка "По умолчанию" и текущий фильтр "Все", загружаем как при первой загрузке
+        if typeSort == .defaultSort && currentFilter == .all {
+            loadLocalData { _ in
+                // Данные уже загружены и отображены
+            }
+        } else {
+            applyFiltersAndSort()
         }
     }
 }
@@ -267,6 +316,7 @@ private extension MainInteractor {
             guard let self = self else { return }
             
             self.tasks = tasks
+            self.originalTasks = tasks // Сохраняем оригинальные задачи
             self.sections.removeAll()
             
             for task in tasks {
@@ -278,26 +328,118 @@ private extension MainInteractor {
             }
         }
     }
+    
+    // MARK: - Filter and Sort Methods
+    
+    private func applyFiltersAndSort() {
+        // Если выбраны фильтр "Все" и сортировка "По умолчанию", загружаем данные как при первой загрузке
+        if currentFilter == .all && currentSort == .defaultSort {
+            loadLocalData { _ in
+                // Данные уже загружены и отображены в loadLocalData
+            }
+            return
+        }
+        
+        guard !originalTasks.isEmpty else {
+            // Если оригинальные задачи пусты, загружаем их
+            taskManager.getAllTasks { [weak self] tasks in
+                guard let self = self else { return }
+                self.originalTasks = tasks
+                self.applyFiltersAndSortToTasks(tasks)
+            }
+            return
+        }
+        
+        applyFiltersAndSortToTasks(originalTasks)
+    }
+    
+    private func applyFiltersAndSortToTasks(_ tasks: [UserTask]) {
+        // Применяем фильтр
+        let filteredTasks = filterTasks(tasks)
+        
+        // Применяем сортировку
+        let sortedTasks = sortTasks(filteredTasks)
+        
+        // Обновляем UI
+        self.tasks = sortedTasks
+        self.sections.removeAll()
+        
+        for task in sortedTasks {
+            self.sections.append(self.createCardSection(task: task))
+        }
+        
+        DispatchQueue.main.async {
+            self.presenter.publish(data: MainModel.Response(data: self.sections), tasksCont: sortedTasks.count)
+        }
+    }
+    
+    private func filterTasks(_ tasks: [UserTask]) -> [UserTask] {
+        switch currentFilter {
+            case .all:
+                // Возвращаем все задачи без фильтрации (как при первой загрузке)
+                return tasks
+            case .completed:
+                return tasks.filter { $0.isCompleted }
+            case .notCompleted:
+                return tasks.filter { !$0.isCompleted }
+        }
+    }
+    
+    private func sortTasks(_ tasks: [UserTask]) -> [UserTask] {
+        switch currentSort {
+            case .defaultSort:
+                // По умолчанию: сортировка как при первой загрузке (только по дате создания, новые сначала)
+                return tasks.sorted { task1, task2 in
+                    let date1 = task1.creationDate ?? Date.distantPast
+                    let date2 = task2.creationDate ?? Date.distantPast
+                    return date1 > date2
+                }
+                
+            case .completed:
+                // Сначала выполненные, затем по дате создания (новые сначала)
+                return tasks.sorted { task1, task2 in
+                    if task1.isCompleted != task2.isCompleted {
+                        return task1.isCompleted // Выполненные сначала
+                    }
+                    // Если статус одинаковый, сортируем по дате создания (новые сначала)
+                    let date1 = task1.creationDate ?? Date.distantPast
+                    let date2 = task2.creationDate ?? Date.distantPast
+                    return date1 > date2
+                }
+                
+            case .noCompleted:
+                // Сначала не выполненные, затем по дате создания (новые сначала)
+                return tasks.sorted { task1, task2 in
+                    if task1.isCompleted != task2.isCompleted {
+                        return !task1.isCompleted // Не выполненные сначала
+                    }
+                    // Если статус одинаковый, сортируем по дате создания (новые сначала)
+                    let date1 = task1.creationDate ?? Date.distantPast
+                    let date2 = task2.creationDate ?? Date.distantPast
+                    return date1 > date2
+                }
+        }
+    }
 }
 // MARK: - Network
 private extension MainInteractor {
     func getTodosData(completion: @escaping([UserTask]) -> ()) {
         dataSource.getTodosList { [weak self] result in
             switch result {
-            case .success(let success):
-                guard let todos = success.todos else {
+                case .success(let success):
+                    guard let todos = success.todos else {
+                        completion([])
+                        return
+                    }
+                    
+                    // Маппим Todo в UserTask и сохраняем в Core Data
+                    self?.taskManager.saveTodosFromServer(todos) { userTasks in
+                        completion(userTasks)
+                    }
+                    
+                case .failure(let failure):
+                    print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - \(failure)\n")
                     completion([])
-                    return
-                }
-                
-                // Маппим Todo в UserTask и сохраняем в Core Data
-                self?.taskManager.saveTodosFromServer(todos) { userTasks in
-                    completion(userTasks)
-                }
-                
-            case .failure(let failure):
-                print("\(#file.components(separatedBy: "/").last ?? "") \(#function) \(#line)\nERROR - \(failure)\n")
-                completion([])
             }
         }
     }

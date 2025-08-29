@@ -23,6 +23,8 @@ protocol IMainPresenter {
     func updateTaskCell(task: UserTask, animated: Bool)
     /// поделиться задачей
     func checkToShareView(id: Int, shareText: String)
+    func updateSortData(_ data: [SortTypes])
+    func updateFilterData(_ data: [FilterTypes])
 }
 
 final class MainPresenter {
@@ -52,6 +54,14 @@ extension MainPresenter: IMainPresenter {
     
     func checkToShareView(id: Int, shareText: String) {
         viewController?.checkToShareView(id: id, shareText: shareText)
+    }
+    
+    func updateSortData(_ data: [SortTypes]) {
+        viewController?.pushToAlertForSort(data)
+    }
+    
+    func updateFilterData(_ data: [FilterTypes]) {
+        viewController?.pushToAlertForFilter(data)
     }
 }
 
